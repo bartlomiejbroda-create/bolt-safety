@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BOLT — Safety Briefing</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bolt-yellow: #34D186;
+  --bolt-dark: #1A1A1A;
+  --bolt-gray: #2A2A2A;
+  --bolt-light: #F5F5F0;
+  --bolt-mid: #E0E0D8;
+  --bolt-accent: #FF6B35;
+  --bolt-danger: #E63946;
+  --bolt-success: #2D6A4F;
+  --bolt-blue: #1D3557;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bolt-dark);
+  color: var(--bolt-dark);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.progress-bar {
+  position: fixed; top:0; left:0; right:0; z-index:1000;
+  height: 4px; background: rgba(255,255,255,0.1);
+}
+.progress-fill {
+  height:100%; background: var(--bolt-yellow);
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 0 12px rgba(52,209,134,0.6);
+}
+
+.step-indicators {
+  position: fixed; top: 16px; left:50%; transform: translateX(-50%);
+  z-index: 999; display: flex; gap: 8px;
+  background: rgba(26,26,26,0.85); backdrop-filter: blur(12px);
+  padding: 8px 16px; border-radius: 30px;
+  border: 1px solid rgba(52,209,134,0.15);
+}
+.step-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); transition: all 0.4s ease;
+}
+.step-dot.active { background: var(--bolt-yellow); box-shadow: 0 0 8px rgba(52,209,134,0.5); }
+.step-dot.done { background: var(--bolt-success); }
+
+.lang-toggle {
+  position: fixed; top: 16px; right: 16px; z-index: 999;
+  display: flex; background: rgba(26,26,26,0.85); backdrop-filter: blur(12px);
+  border-radius: 30px; overflow: hidden;
+  border: 1px solid rgba(52,209,134,0.15);
+}
+.lang-btn {
+  padding: 8px 16px; border: none; background: transparent;
+  color: rgba(255,255,255,0.5); font-family: inherit; font-weight: 700;
+  font-size: 13px; cursor: pointer; transition: all 0.3s; letter-spacing: 1px;
+}
+.lang-btn.active { color: white; background: var(--bolt-yellow); }
+
+.section {
+  min-height: 100vh; display: none; flex-direction: column;
+  animation: fadeUp 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+.section.active { display: flex; }
+
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(30px); }
+  to { opacity:1; transform: translateY(0); }
+}
+
+.hero {
+  min-height: 100vh; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center;
+  background: var(--bolt-dark); padding: 40px 24px;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: repeating-conic-gradient(from 0deg, transparent 0deg 8deg, rgba(52,209,134,0.02) 8deg 10deg);
+  animation: rotateBg 60s linear infinite;
+}
+@keyframes rotateBg { to { transform: rotate(360deg); } }
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(52,209,134,0.1); border: 1px solid rgba(52,209,134,0.25);
+  border-radius: 30px; padding: 8px 20px; margin-bottom: 32px;
+  position: relative; z-index: 1;
+}
+.hero-badge-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--bolt-yellow); animation: pulse 2s ease infinite;
+}
+@keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
+.hero-badge span { color: var(--bolt-yellow); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+
+.hero-logo {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(56px, 12vw, 96px); color: var(--bolt-yellow);
+  letter-spacing: -3px; position: relative; z-index: 1;
+  text-shadow: 0 0 60px rgba(52,209,134,0.3);
+}
+.hero-logo span { color: white; font-size: 0.4em; vertical-align: super; opacity: 0.5; }
+
+.hero-subtitle {
+  color: rgba(255,255,255,0.6); font-size: clamp(16px, 3vw, 20px);
+  max-width: 480px; line-height: 1.6; margin-top: 16px; position: relative; z-index: 1;
+}
+
+.hero-start-btn {
+  margin-top: 48px; position: relative; z-index: 1;
+  background: var(--bolt-yellow); color: white;
+  border: none; padding: 18px 48px; border-radius: 60px;
+  font-family: inherit; font-weight: 800; font-size: 16px;
+  cursor: pointer; letter-spacing: 1px;
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 4px 24px rgba(52,209,134,0.3);
+}
+.hero-start-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(52,209,134,0.5); }
+.hero-start-btn:active { transform: scale(0.97); }
+
+.content { max-width: 640px; width: 100%; margin: 0 auto; padding: 80px 20px 120px; }
+
+.section-reg { background: var(--bolt-light); }
+.section-title {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(28px, 5vw, 36px); font-weight: 700; margin-bottom: 8px; line-height: 1.2;
+}
+.section-subtitle { color: rgba(26,26,26,0.5); font-size: 15px; margin-bottom: 40px; }
+
+.form-group { margin-bottom: 24px; }
+.form-label {
+  display: block; font-weight: 700; font-size: 13px;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  margin-bottom: 8px; color: rgba(26,26,26,0.5);
+}
+.form-input, .form-select {
+  width: 100%; padding: 16px 20px; border: 2px solid var(--bolt-mid);
+  border-radius: var(--radius-sm); font-family: inherit; font-size: 16px;
+  background: white; color: var(--bolt-dark); transition: border-color 0.3s;
+  -webkit-appearance: none;
+}
+.form-input:focus, .form-select:focus { outline: none; border-color: var(--bolt-yellow); }
+.form-input::placeholder { color: rgba(26,26,26,0.25); }
+.form-input.error, .form-select.error { border-color: var(--bolt-danger); }
+.error-msg { color: var(--bolt-danger); font-size: 13px; margin-top: 4px; display: none; font-weight: 600; }
+.error-msg.show { display: block; }
+
+.section-rules { background: var(--bolt-light); }
+
+.rule-category {
+  margin-bottom: 40px; background: white; border-radius: var(--radius);
+  overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+}
+.rule-category-header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px 24px; cursor: pointer;
+  border-bottom: 1px solid rgba(0,0,0,0.05); transition: background 0.2s;
+}
+.rule-category-header:hover { background: rgba(52,209,134,0.04); }
+.rule-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; flex-shrink: 0;
+}
+.rule-category-title { font-weight: 800; font-size: 17px; line-height: 1.3; }
+.rule-category-count { font-size: 12px; color: rgba(26,26,26,0.4); font-weight: 600; margin-top: 2px; }
+.rule-expand-icon { margin-left: auto; font-size: 20px; color: rgba(26,26,26,0.3); transition: transform 0.3s; }
+.rule-category.open .rule-expand-icon { transform: rotate(180deg); }
+
+.rule-items { max-height: 0; overflow: hidden; transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1); }
+.rule-category.open .rule-items { max-height: 2000px; }
+
+.rule-item {
+  display: flex; gap: 16px; padding: 16px 24px;
+  border-bottom: 1px solid rgba(0,0,0,0.03); align-items: flex-start;
+}
+.rule-item:last-child { border-bottom: none; }
+.rule-bullet {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0; margin-top: 2px;
+}
+.rule-text { font-size: 15px; line-height: 1.6; color: rgba(26,26,26,0.8); }
+
+.rule-highlight {
+  background: rgba(52,209,134,0.08); border-left: 3px solid var(--bolt-yellow);
+  padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 8px 24px 16px;
+  font-size: 14px; font-weight: 600; color: rgba(26,26,26,0.7);
+}
+
+.bg-yellow { background: rgba(52,209,134,0.15); }
+.bg-red { background: rgba(230,57,70,0.12); }
+.bg-blue { background: rgba(29,53,87,0.1); }
+.bg-green { background: rgba(45,106,79,0.1); }
+.bg-orange { background: rgba(255,107,53,0.1); }
+
+/* NARRATOR */
+.narrator-fab {
+  position: fixed; bottom: 90px; right: 20px; z-index: 500;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--bolt-dark); border: 2px solid var(--bolt-yellow);
+  color: var(--bolt-yellow); font-size: 24px;
+  display: none; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.3s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.narrator-fab.visible { display: flex; }
+.narrator-fab:hover { transform: scale(1.08); }
+.narrator-fab.speaking {
+  animation: speakPulse 1.5s ease infinite;
+  background: var(--bolt-yellow); color: white;
+}
+@keyframes speakPulse {
+  0%,100% { box-shadow: 0 4px 20px rgba(52,209,134,0.3); }
+  50% { box-shadow: 0 4px 30px rgba(52,209,134,0.7); }
+}
+
+.narrator-tooltip {
+  position: fixed; bottom: 155px; right: 16px; z-index: 500;
+  background: var(--bolt-dark); color: white;
+  padding: 10px 16px; border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+  display: none; max-width: 280px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  border: 1px solid rgba(52,209,134,0.2);
+  animation: fadeUp 0.3s ease;
+  line-height: 1.4;
+}
+.narrator-tooltip::after {
+  content:''; position: absolute; bottom: -6px; right: 24px;
+  width: 12px; height: 12px; background: var(--bolt-dark);
+  transform: rotate(45deg); border-right: 1px solid rgba(52,209,134,0.2);
+  border-bottom: 1px solid rgba(52,209,134,0.2);
+}
+
+/* QUIZ */
+.section-quiz { background: var(--bolt-dark); color: white; }
+.section-quiz .section-subtitle { color: rgba(255,255,255,0.4); }
+.section-quiz .section-title { color: var(--bolt-yellow); }
+
+.quiz-progress { display: flex; gap: 6px; margin-bottom: 32px; }
+.quiz-progress-dot {
+  flex:1; height: 4px; border-radius: 4px;
+  background: rgba(255,255,255,0.1); transition: background 0.4s;
+}
+.quiz-progress-dot.done { background: var(--bolt-success); }
+.quiz-progress-dot.current { background: var(--bolt-yellow); }
+.quiz-progress-dot.wrong { background: var(--bolt-danger); }
+
+.quiz-card {
+  background: var(--bolt-gray); border-radius: var(--radius);
+  padding: 32px 24px; border: 1px solid rgba(255,255,255,0.06);
+}
+.quiz-question-num { font-size: 12px; font-weight: 700; color: var(--bolt-yellow); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+.quiz-question { font-size: 19px; font-weight: 700; line-height: 1.5; margin-bottom: 28px; }
+.quiz-options { display: flex; flex-direction: column; gap: 12px; }
+.quiz-option {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px; border-radius: var(--radius-sm);
+  border: 2px solid rgba(255,255,255,0.08);
+  cursor: pointer; transition: all 0.3s; font-size: 15px; line-height: 1.5;
+}
+.quiz-option:hover { border-color: rgba(52,209,134,0.3); background: rgba(52,209,134,0.05); }
+.quiz-option-letter {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 13px; flex-shrink: 0; transition: all 0.3s;
+}
+.quiz-option.correct { border-color: var(--bolt-success) !important; background: rgba(45,106,79,0.15) !important; }
+.quiz-option.correct .quiz-option-letter { background: var(--bolt-success) !important; color: white !important; }
+.quiz-option.wrong { border-color: var(--bolt-danger) !important; background: rgba(230,57,70,0.1) !important; }
+.quiz-option.wrong .quiz-option-letter { background: var(--bolt-danger) !important; color: white !important; }
+.quiz-option.disabled { pointer-events: none; }
+
+.quiz-feedback {
+  margin-top: 20px; padding: 16px 20px; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 600; display: none; line-height: 1.5;
+}
+.quiz-feedback.correct-fb { display: block; background: rgba(45,106,79,0.15); border: 1px solid rgba(45,106,79,0.3); color: #52b788; }
+.quiz-feedback.wrong-fb { display: block; background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.2); color: #ff8a94; }
+
+.section-confirm { background: var(--bolt-light); }
+
+.confirm-summary {
+  background: white; border-radius: var(--radius);
+  padding: 24px; margin-bottom: 32px; box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+}
+.confirm-summary h3 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(26,26,26,0.4); margin-bottom: 16px; }
+.confirm-row {
+  display: flex; justify-content: space-between; padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 15px;
+}
+.confirm-row:last-child { border-bottom: none; }
+.confirm-row .label { color: rgba(26,26,26,0.5); }
+.confirm-row .value { font-weight: 700; text-align: right; max-width: 55%; }
+
+.checkbox-group { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 20px; cursor: pointer; }
+.custom-checkbox {
+  width: 24px; height: 24px; border-radius: 6px;
+  border: 2px solid var(--bolt-mid); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s; margin-top: 2px;
+}
+.checkbox-group.checked .custom-checkbox { background: var(--bolt-yellow); border-color: var(--bolt-yellow); }
+.checkbox-label { font-size: 15px; line-height: 1.5; color: rgba(26,26,26,0.7); }
+
+.section-success {
+  background: var(--bolt-dark); min-height: 100vh; display: none;
+  flex-direction: column; justify-content: center; align-items: center; text-align: center;
+  padding: 40px 24px;
+}
+.section-success.active { display: flex; }
+
+.success-check {
+  width: 100px; height: 100px; border-radius: 50%;
+  background: var(--bolt-success); display: flex;
+  align-items: center; justify-content: center; margin-bottom: 32px;
+  animation: scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+.success-check svg { width: 48px; height: 48px; }
+.success-title { font-family: 'Space Mono', monospace; font-size: clamp(28px, 5vw, 40px); color: var(--bolt-yellow); margin-bottom: 12px; }
+.success-subtitle { color: rgba(255,255,255,0.5); font-size: 17px; max-width: 400px; line-height: 1.6; }
+.success-id {
+  margin-top: 32px; background: var(--bolt-gray); border-radius: var(--radius-sm);
+  padding: 16px 28px; border: 1px solid rgba(255,255,255,0.06);
+}
+.success-id-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: rgba(255,255,255,0.3); text-transform: uppercase; }
+.success-id-value { font-family: 'Space Mono', monospace; font-size: 24px; color: white; margin-top: 4px; }
+
+.sheets-status { margin-top: 16px; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 8px; }
+.sheets-status.sending { color: rgba(255,255,255,0.4); }
+.sheets-status.sent { color: var(--bolt-success); background: rgba(45,106,79,0.15); }
+.sheets-status.failed { color: var(--bolt-danger); background: rgba(230,57,70,0.1); }
+
+.btn-primary {
+  width: 100%; padding: 18px; border: none; border-radius: var(--radius-sm);
+  font-family: inherit; font-weight: 800; font-size: 16px;
+  cursor: pointer; transition: all 0.3s; letter-spacing: 0.5px;
+}
+.btn-yellow { background: var(--bolt-yellow); color: white; box-shadow: 0 4px 20px rgba(52,209,134,0.25); }
+.btn-yellow:hover { box-shadow: 0 6px 28px rgba(52,209,134,0.4); transform: translateY(-1px); }
+.btn-yellow:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+.btn-next-container {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  padding: 16px 20px; z-index: 100;
+  background: linear-gradient(transparent, rgba(245,245,240,1) 30%);
+}
+.btn-next-container.dark-bg { background: linear-gradient(transparent, rgba(26,26,26,1) 30%); }
+
+.emergency-box { background: var(--bolt-danger); color: white; border-radius: var(--radius); padding: 20px 24px; margin: 20px 0; }
+.emergency-box h4 { font-size: 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.emergency-numbers { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.emergency-num { background: rgba(255,255,255,0.2); border-radius: 8px; padding: 8px 16px; font-weight: 800; font-size: 18px; font-family: 'Space Mono', monospace; }
+.emergency-label { font-size: 12px; font-weight: 600; opacity: 0.8; display: block; }
+
+.speed-limits { display: flex; gap: 16px; margin: 16px 0; justify-content: center; }
+.speed-sign { width: 90px; height: 90px; border-radius: 50%; border: 6px solid var(--bolt-danger); display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; }
+.speed-value { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 26px; color: var(--bolt-dark); line-height: 1; }
+.speed-unit { font-size: 10px; color: rgba(26,26,26,0.5); font-weight: 700; }
+.speed-label { font-size: 11px; font-weight: 700; color: rgba(26,26,26,0.5); margin-top: 6px; text-align: center; }
+
+.ppe-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+.ppe-item { background: rgba(29,53,87,0.06); border-radius: var(--radius-sm); padding: 16px 8px; text-align: center; border: 1px solid rgba(29,53,87,0.08); }
+.ppe-icon { font-size: 32px; margin-bottom: 6px; }
+.ppe-name { font-size: 11px; font-weight: 700; color: rgba(26,26,26,0.6); line-height: 1.3; }
+
+.hazard-tag { background:rgba(255,107,53,0.1);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;color:rgba(26,26,26,0.7); }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+
+@media (max-width: 480px) {
+  .content { padding: 70px 16px 120px; }
+  .rule-category-header { padding: 16px; }
+  .rule-item { padding: 12px 16px; }
+  .quiz-card { padding: 24px 18px; }
+  .ppe-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+<div class="step-indicators" id="stepIndicators">
+  <div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div>
+</div>
+
+<div class="lang-toggle">
+  <button class="lang-btn active" onclick="setLang('pl')">PL</button>
+  <button class="lang-btn" onclick="setLang('en')">EN</button>
+</div>
+
+<div class="narrator-fab" id="narratorFab" onclick="toggleNarrator()"><span id="narratorIcon">🔊</span></div>
+<div class="narrator-tooltip" id="narratorTooltip"></div>
+
+<!-- STEP 0: HERO -->
+<div class="section active" id="step0">
+  <div class="hero">
+    <div class="hero-badge"><div class="hero-badge-dot"></div><span data-pl="Szkolenie BHP" data-en="Safety Briefing">Szkolenie BHP</span></div>
+    <div class="hero-logo" style="display:flex;align-items:center;justify-content:center;">
+      <svg viewBox="0 0 60 60" style="height:clamp(90px,20vw,150px);width:auto;border-radius:16px;" xmlns="http://www.w3.org/2000/svg"><path d="m0 0h60v60h-60z" fill="#2eb565"/><path d="m3.63 16.67h9.05c4.43.29 7.59 4.42 6.67 8.79-.17.82-.5 1.59-.92 2.3 2.42 2.35 2.85 6.15 1.06 9.01a7.336 7.336 0 0 1 -5.62 3.41h-10.24zm5.56 8.99h3.22c.85 0 1.59-.96 1.57-1.77s-.75-1.7-1.57-1.7h-3.22zm0 9h4.33c.76 0 1.48-.88 1.53-1.6.07-.89-.7-1.87-1.63-1.87h-4.23zm21.09-11.31c6.74-.36 11.25 6.94 7.86 12.81s-11.67 5.67-14.87-.1c-3.07-5.53.72-12.37 7.01-12.71zm.1 5.79c-1 .1-1.93.89-2.25 1.83-.77 2.26 1.43 4.38 3.65 3.48 2.91-1.18 1.89-5.64-1.4-5.31zm23.79-9.71v4.21h2.75l.05.05v5.46l-.05.05h-2.71v4.9c0 .11.08.43.12.56.38 1.38 1.47 1.26 2.64 1.01v4.06c-1.39.8-3.16.88-4.68.44-2.23-.64-3.5-2.46-3.64-4.75v-14.8l5.53-1.18zm-7.68-2.76v23.51h-5.53v-22.36zm-15.84 25.74c1.99-.06 3.39 1.95 2.66 3.81-.77 1.95-3.4 2.36-4.72.73-1.44-1.77-.22-4.47 2.06-4.53z" fill="#fff"/></svg>
+    </div>
+    <p class="hero-subtitle" data-pl="Zapoznaj się z zasadami bezpieczeństwa obowiązującymi na terenie naszego magazynu. Zajmie to kilka minut." data-en="Review the safety rules in our warehouse. This will take just a few minutes.">Zapoznaj się z zasadami bezpieczeństwa obowiązującymi na terenie naszego magazynu. Zajmie to kilka minut.</p>
+    <button class="hero-start-btn" onclick="goToStep(1)" data-pl="Rozpocznij →" data-en="Start →">Rozpocznij →</button>
+  </div>
+</div>
+
+<!-- STEP 1: REGISTRATION -->
+<div class="section section-reg" id="step1">
+  <div class="content">
+    <div class="section-title" data-pl="Rejestracja gościa" data-en="Visitor Registration">Rejestracja gościa</div>
+    <p class="section-subtitle" data-pl="Podaj swoje dane, aby kontynuować" data-en="Enter your details to continue">Podaj swoje dane, aby kontynuować</p>
+
+    <div class="form-group">
+      <label class="form-label" data-pl="Imię i nazwisko" data-en="Full name">Imię i nazwisko</label>
+      <input class="form-input" id="fName" type="text" data-pl-ph="np. Jan Kowalski" data-en-ph="e.g. John Smith" placeholder="np. Jan Kowalski">
+      <div class="error-msg" id="errName" data-pl="Podaj imię i nazwisko" data-en="Please enter your name">Podaj imię i nazwisko</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-pl="Firma" data-en="Company">Firma</label>
+      <input class="form-input" id="fCompany" type="text" data-pl-ph="Nazwa firmy" data-en-ph="Company name" placeholder="Nazwa firmy">
+      <div class="error-msg" id="errCompany" data-pl="Podaj nazwę firmy" data-en="Please enter company name">Podaj nazwę firmy</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-pl="Lokalizacja" data-en="Location">Lokalizacja</label>
+      <input class="form-input" id="fLocation" type="text" data-pl-ph="np. Warszawa, Palisadowa 20/22" data-en-ph="e.g. Warsaw, Palisadowa 20/22" placeholder="np. Warszawa, Palisadowa 20/22">
+      <div class="error-msg" id="errLocation" data-pl="Podaj lokalizację" data-en="Please enter location">Podaj lokalizację</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-pl="Rodzaj gościa" data-en="Type of visitor">Rodzaj gościa</label>
+      <select class="form-select" id="fVisitorType">
+        <option value="" data-pl="Wybierz..." data-en="Select...">Wybierz...</option>
+        <option value="Bolt employee / Pracownik Bolt" data-pl="Pracownik Bolt" data-en="Bolt employee">Pracownik Bolt</option>
+        <option value="Contractor / Firma zewnętrzna" data-pl="Pracownik firmy zewnętrznej" data-en="Contractor">Pracownik firmy zewnętrznej</option>
+        <option value="Client / Klient" data-pl="Klient" data-en="Client">Klient</option>
+        <option value="Courier / Kurier" data-pl="Kurier" data-en="Courier">Kurier</option>
+        <option value="Guest / Gość" data-pl="Gość" data-en="Guest">Gość</option>
+      </select>
+      <div class="error-msg" id="errVisitorType" data-pl="Wybierz rodzaj gościa" data-en="Please select visitor type">Wybierz rodzaj gościa</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-pl="Powód wizyty" data-en="Reason for visit">Powód wizyty</label>
+      <select class="form-select" id="fPurpose">
+        <option value="" data-pl="Wybierz..." data-en="Select...">Wybierz...</option>
+        <option value="Wizyta">Wizyta</option>
+        <option value="Delegacja">Delegacja</option>
+        <option value="Regular visit - meeting" data-pl="Spotkanie" data-en="Meeting">Spotkanie</option>
+        <option value="Audyt" data-pl="Audyt / Kontrola" data-en="Audit">Audyt / Kontrola</option>
+        <option value="Serwis" data-pl="Serwis / Naprawa" data-en="Service">Serwis / Naprawa</option>
+        <option value="Dostawa" data-pl="Dostawa / Odbiór" data-en="Delivery">Dostawa / Odbiór</option>
+        <option value="Inne" data-pl="Inne" data-en="Other">Inne</option>
+      </select>
+      <div class="error-msg" id="errPurpose" data-pl="Wybierz powód wizyty" data-en="Please select reason">Wybierz powód wizyty</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-pl="Osoba kontaktowa w BOLT" data-en="BOLT contact person">Osoba kontaktowa w BOLT</label>
+      <input class="form-input" id="fContact" type="text" data-pl-ph="Kogo odwiedzasz?" data-en-ph="Who are you visiting?" placeholder="Kogo odwiedzasz?">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-pl="Przewidywany czas pobytu" data-en="Estimated duration of visit">Przewidywany czas pobytu</label>
+      <select class="form-select" id="fDuration">
+        <option value="" data-pl="Wybierz..." data-en="Select...">Wybierz...</option>
+        <option value="0.5" data-pl="30 minut" data-en="30 minutes">30 minut</option>
+        <option value="1" data-pl="1 godzina" data-en="1 hour">1 godzina</option>
+        <option value="2" data-pl="2 godziny" data-en="2 hours">2 godziny</option>
+        <option value="3" data-pl="3 godziny" data-en="3 hours">3 godziny</option>
+        <option value="4" data-pl="4 godziny" data-en="4 hours">4 godziny</option>
+        <option value="6" data-pl="6 godzin" data-en="6 hours">6 godzin</option>
+        <option value="8" data-pl="Cały dzień (8h)" data-en="Full day (8h)">Cały dzień (8h)</option>
+      </select>
+      <div class="error-msg" id="errDuration" data-pl="Wybierz przewidywany czas" data-en="Please select duration">Wybierz przewidywany czas</div>
+    </div>
+  </div>
+  <div class="btn-next-container">
+    <button class="btn-primary btn-yellow" onclick="validateStep1()" data-pl="Dalej — Zasady BHP →" data-en="Next — Safety Rules →">Dalej — Zasady BHP →</button>
+  </div>
+</div>
+
+<!-- STEP 2: RULES -->
+<div class="section section-rules" id="step2">
+  <div class="content">
+    <div class="section-title" data-pl="Zasady bezpieczeństwa" data-en="Safety Rules">Zasady bezpieczeństwa</div>
+    <p class="section-subtitle" data-pl="Rozwiń każdą sekcję i zapoznaj się z zasadami. Kliknij 🔊 aby odsłuchać." data-en="Expand each section and review the rules. Tap 🔊 to listen.">Rozwiń każdą sekcję i zapoznaj się z zasadami. Kliknij 🔊 aby odsłuchać.</p>
+
+    <div class="rule-category open" onclick="toggleCategory(this)">
+      <div class="rule-category-header">
+        <div class="rule-icon bg-yellow">🚶</div>
+        <div><div class="rule-category-title" data-pl="Wejście i poruszanie się" data-en="Entry & Movement">Wejście i poruszanie się</div><div class="rule-category-count" data-pl="5 zasad" data-en="5 rules">5 zasad</div></div>
+        <div class="rule-expand-icon">▼</div>
+      </div>
+      <div class="rule-items">
+        <div class="rule-item"><div class="rule-bullet bg-yellow">👤</div><div class="rule-text" data-pl="Poruszanie się po terenie firmy może odbywać się wyłącznie z przedstawicielem firmy BOLT." data-en="Movement within the company premises is allowed only with a BOLT representative.">Poruszanie się po terenie firmy może odbywać się wyłącznie z przedstawicielem firmy BOLT.</div></div>
+        <div class="rule-item"><div class="rule-bullet bg-yellow">📋</div><div class="rule-text" data-pl="Pracownicy firm zewnętrznych powinni uzgodnić ze swoim opiekunem zasady poruszania się. W szczególnych przypadkach — kontakt z działem BHP." data-en="External company employees must agree on movement rules with their supervisor. In special cases — contact the HSE department.">Pracownicy firm zewnętrznych powinni uzgodnić ze swoim opiekunem zasady poruszania się. W szczególnych przypadkach — kontakt z działem BHP.</div></div>
+        <div class="rule-item"><div class="rule-bullet bg-yellow">🅿️</div><div class="rule-text" data-pl="Pojazdy parkuj wyłącznie w miejscach do tego wyznaczonych. BOLT nie ponosi odpowiedzialności za pozostawione pojazdy." data-en="Park vehicles only in designated areas. BOLT is not responsible for parked vehicles.">Pojazdy parkuj wyłącznie w miejscach do tego wyznaczonych. BOLT nie ponosi odpowiedzialności za pozostawione pojazdy.</div></div>
+        <div class="rule-highlight" data-pl="⚡ Ograniczenia prędkości na terenie firmy:" data-en="⚡ Speed limits on company premises:">⚡ Ograniczenia prędkości na terenie firmy:</div>
+        <div class="speed-limits"><div><div class="speed-sign"><div class="speed-value">5</div><div class="speed-unit">km/h</div></div><div class="speed-label" data-pl="Wewnątrz hal" data-en="Inside halls">Wewnątrz hal</div></div><div><div class="speed-sign"><div class="speed-value">10</div><div class="speed-unit">km/h</div></div><div class="speed-label" data-pl="Na zewnątrz" data-en="Outside">Na zewnątrz</div></div></div>
+        <div class="rule-item"><div class="rule-bullet bg-yellow">🚪</div><div class="rule-text" data-pl="Przebywaj tylko w miejscu wyznaczonego zadania. Wchodzenie do pomieszczeń niezwiązanych z zadaniem jest zabronione." data-en="Stay only at your designated task area. Entering rooms unrelated to your task is prohibited.">Przebywaj tylko w miejscu wyznaczonego zadania. Wchodzenie do pomieszczeń niezwiązanych z zadaniem jest zabronione.</div></div>
+      </div>
+    </div>
+
+    <div class="rule-category" onclick="toggleCategory(this)">
+      <div class="rule-category-header"><div class="rule-icon bg-red">🚫</div><div><div class="rule-category-title" data-pl="Zakazy" data-en="Prohibitions">Zakazy</div><div class="rule-category-count" data-pl="4 zasady" data-en="4 rules">4 zasady</div></div><div class="rule-expand-icon">▼</div></div>
+      <div class="rule-items">
+        <div class="rule-item"><div class="rule-bullet bg-red">🍺</div><div class="rule-text" data-pl="Zakaz wnoszenia i spożywania alkoholu oraz przebywania w stanie nietrzeźwym. Zakaz posiadania i bycia pod wpływem narkotyków i środków odurzających." data-en="Alcohol is strictly prohibited. Being under the influence of drugs or intoxicants is forbidden.">Zakaz wnoszenia i spożywania alkoholu oraz przebywania w stanie nietrzeźwym. Zakaz posiadania i bycia pod wpływem narkotyków i środków odurzających.</div></div>
+        <div class="rule-item"><div class="rule-bullet bg-red">🚬</div><div class="rule-text" data-pl="Palenie papierosów i e-papierosów dozwolone wyłącznie w wyznaczonych miejscach." data-en="Smoking (including e-cigarettes) is allowed only in designated areas.">Palenie papierosów i e-papierosów dozwolone wyłącznie w wyznaczonych miejscach.</div></div>
+        <div class="rule-item"><div class="rule-bullet bg-red">🔫</div><div class="rule-text" data-pl="Zakaz wnoszenia i używania wszelkiej broni — w tym replik, broni pneumatycznej i air soft. Każda sytuacja z użyciem broni będzie zgłaszana na policję." data-en="All weapons are prohibited — including replicas, air guns, and airsoft. Any weapon-related incident will be reported to the police.">Zakaz wnoszenia i używania wszelkiej broni — w tym replik, broni pneumatycznej i air soft. Każda sytuacja z użyciem broni będzie zgłaszana na policję.</div></div>
+        <div class="rule-item"><div class="rule-bullet bg-red">⚙️</div><div class="rule-text" data-pl="Zakaz samowolnego włączania maszyn i urządzeń. Uruchamianie dozwolone wyłącznie za zgodą odpowiednich osób i przy posiadaniu wymaganych uprawnień." data-en="Do not operate machinery without authorization. Operation requires approval and proper qualifications.">Zakaz samowolnego włączania maszyn i urządzeń. Uruchamianie dozwolone wyłącznie za zgodą odpowiednich osób i przy posiadaniu wymaganych uprawnień.</div></div>
+      </div>
+    </div>
+
+    <div class="rule-category" onclick="toggleCategory(this)">
+      <div class="rule-category-header"><div class="rule-icon bg-blue">🦺</div><div><div class="rule-category-title" data-pl="Środki ochrony osobistej (PPE)" data-en="Personal Protective Equipment (PPE)">Środki ochrony osobistej (PPE)</div><div class="rule-category-count" data-pl="Sprawdź wymagania" data-en="Check requirements">Sprawdź wymagania</div></div><div class="rule-expand-icon">▼</div></div>
+      <div class="rule-items">
+        <div class="rule-highlight" data-pl="🦺 Kamizelka odblaskowa jest OBOWIĄZKOWA na całym terenie firmy!" data-en="🦺 High-visibility vest is MANDATORY on all company premises!">🦺 Kamizelka odblaskowa jest OBOWIĄZKOWA na całym terenie firmy!</div>
+        <div class="rule-item"><div class="rule-bullet bg-blue">👟</div><div class="rule-text" data-pl="Na teren firmy wchodzimy wyłącznie w obuwiu na płaskiej, nieśliskiej podeszwie." data-en="Only flat, non-slip footwear is allowed on company premises.">Na teren firmy wchodzimy wyłącznie w obuwiu na płaskiej, nieśliskiej podeszwie.</div></div>
+        <div style="padding: 8px 24px 20px;">
+          <div class="ppe-grid">
+            <div class="ppe-item"><div class="ppe-icon">🥽</div><div class="ppe-name" data-pl="Okulary ochronne" data-en="Safety goggles">Okulary ochronne</div></div>
+            <div class="ppe-item"><div class="ppe-icon">🎧</div><div class="ppe-name" data-pl="Ochronniki słuchu" data-en="Hearing protection">Ochronniki słuchu</div></div>
+            <div class="ppe-item"><div class="ppe-icon">🧤</div><div class="ppe-name" data-pl="Rękawice ochronne" data-en="Protective gloves">Rękawice ochronne</div></div>
+            <div class="ppe-item"><div class="ppe-icon">👷</div><div class="ppe-name" data-pl="Ochrona głowy" data-en="Head protection">Ochrona głowy</div></div>
+            <div class="ppe-item"><div class="ppe-icon">🥾</div><div class="ppe-name" data-pl="Obuwie ochronne" data-en="Safety footwear">Obuwie ochronne</div></div>
+            <div class="ppe-item"><div class="ppe-icon">🦺</div><div class="ppe-name" data-pl="Kamizelka" data-en="Hi-vis vest">Kamizelka</div></div>
+          </div>
+          <p style="font-size:13px; color:rgba(26,26,26,0.5); text-align:center; margin-top:8px;" data-pl="Stosuj w oznaczonych miejscach" data-en="Use in designated areas">Stosuj w oznaczonych miejscach</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-category" onclick="toggleCategory(this)">
+      <div class="rule-category-header"><div class="rule-icon bg-orange">⚠️</div><div><div class="rule-category-title" data-pl="Zagrożenia na terenie firmy" data-en="Hazards on Premises">Zagrożenia na terenie firmy</div><div class="rule-category-count" data-pl="Bądź świadomy" data-en="Stay alert">Bądź świadomy</div></div><div class="rule-expand-icon">▼</div></div>
+      <div class="rule-items">
+        <div style="padding: 16px 24px; display: flex; flex-wrap: wrap; gap: 8px;">
+          <span class="hazard-tag" data-pl="💥 Hałas" data-en="💥 Noise">💥 Hałas</span>
+          <span class="hazard-tag" data-pl="🏗️ Uderzenie przez maszyny" data-en="🏗️ Moving machinery">🏗️ Uderzenie przez maszyny</span>
+          <span class="hazard-tag" data-pl="📦 Upadek przedmiotów" data-en="📦 Falling objects">📦 Upadek przedmiotów</span>
+          <span class="hazard-tag" data-pl="🚗 Ruch pojazdów" data-en="🚗 Vehicle traffic">🚗 Ruch pojazdów</span>
+          <span class="hazard-tag" data-pl="💧 Śliska nawierzchnia" data-en="💧 Slippery surfaces">💧 Śliska nawierzchnia</span>
+          <span class="hazard-tag" data-pl="⚡ Porażenie prądem" data-en="⚡ Electric shock">⚡ Porażenie prądem</span>
+          <span class="hazard-tag" data-pl="🔥 Pożar" data-en="🔥 Fire">🔥 Pożar</span>
+          <span class="hazard-tag" data-pl="⚙️ Pochwycenie przez maszyny" data-en="⚙️ Machine entanglement">⚙️ Pochwycenie przez maszyny</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-category" onclick="toggleCategory(this)">
+      <div class="rule-category-header"><div class="rule-icon bg-red">🚨</div><div><div class="rule-category-title" data-pl="Sytuacje awaryjne" data-en="Emergency Procedures">Sytuacje awaryjne</div><div class="rule-category-count" data-pl="Ważne!" data-en="Important!">Ważne!</div></div><div class="rule-expand-icon">▼</div></div>
+      <div class="rule-items">
+        <div class="rule-item"><div class="rule-bullet bg-red">🔥</div><div class="rule-text" data-pl="W przypadku pożaru — poinformuj przedstawiciela BOLT i stosuj się do poleceń osoby prowadzącej ewakuację." data-en="In case of fire — inform a BOLT representative and follow evacuation leader's instructions.">W przypadku pożaru — poinformuj przedstawiciela BOLT i stosuj się do poleceń osoby prowadzącej ewakuację.</div></div>
+        <div class="rule-item"><div class="rule-bullet bg-red">🤕</div><div class="rule-text" data-pl="W razie urazu — zwróć się do pracowników BOLT. W firmie dostępne są apteczki pierwszej pomocy." data-en="In case of injury — contact BOLT staff. First aid kits are available on site.">W razie urazu — zwróć się do pracowników BOLT. W firmie dostępne są apteczki pierwszej pomocy.</div></div>
+        <div class="rule-item"><div class="rule-bullet bg-red">⚠️</div><div class="rule-text" data-pl="W razie wypadku — niezwłocznie poinformuj osobę odpowiedzialną za Twój pobyt." data-en="In case of accident — immediately inform the person responsible for your visit.">W razie wypadku — niezwłocznie poinformuj osobę odpowiedzialną za Twój pobyt.</div></div>
+        <div class="emergency-box">
+          <h4>🚨 <span data-pl="Numery alarmowe" data-en="Emergency Numbers">Numery alarmowe</span></h4>
+          <div class="emergency-numbers">
+            <div><div class="emergency-num">112</div><div class="emergency-label" data-pl="Numer ogólny" data-en="General emergency">Numer ogólny</div></div>
+            <div><div class="emergency-num">998</div><div class="emergency-label" data-pl="Straż Pożarna" data-en="Fire Department">Straż Pożarna</div></div>
+            <div><div class="emergency-num">999</div><div class="emergency-label" data-pl="Pogotowie" data-en="Ambulance">Pogotowie</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-category" onclick="toggleCategory(this)">
+      <div class="rule-category-header"><div class="rule-icon bg-green">♻️</div><div><div class="rule-category-title" data-pl="Porządek i odpady" data-en="Cleanliness & Waste">Porządek i odpady</div><div class="rule-category-count" data-pl="3 zasady" data-en="3 rules">3 zasady</div></div><div class="rule-expand-icon">▼</div></div>
+      <div class="rule-items">
+        <div class="rule-item"><div class="rule-bullet bg-green">🧹</div><div class="rule-text" data-pl="Utrzymuj ład i porządek na stanowisku pracy. Nie pozostawiaj urządzeń i narzędzi będących w ruchu." data-en="Keep your workspace clean and tidy. Do not leave running equipment unattended.">Utrzymuj ład i porządek na stanowisku pracy. Nie pozostawiaj urządzeń i narzędzi będących w ruchu.</div></div>
+        <div class="rule-item"><div class="rule-bullet bg-green">♻️</div><div class="rule-text" data-pl="Segreguj odpady w sposób przyjęty na terenie firmy. Umieszczaj je w odpowiednich pojemnikach." data-en="Sort waste according to company standards. Place waste in appropriate containers.">Segreguj odpady w sposób przyjęty na terenie firmy. Umieszczaj je w odpowiednich pojemnikach.</div></div>
+        <div class="rule-item"><div class="rule-bullet bg-green">☣️</div><div class="rule-text" data-pl="Odpady niebezpieczne są utylizowane przez wyspecjalizowane podmioty — nie wyrzucaj ich samodzielnie." data-en="Hazardous waste is disposed of by specialized companies — do not dispose of it yourself.">Odpady niebezpieczne są utylizowane przez wyspecjalizowane podmioty — nie wyrzucaj ich samodzielnie.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-next-container">
+    <button class="btn-primary btn-yellow" onclick="stopNarrator(); goToStep(3)" data-pl="Przejdź do quizu →" data-en="Go to Quiz →">Przejdź do quizu →</button>
+  </div>
+</div>
+
+<!-- STEP 3: QUIZ -->
+<div class="section section-quiz" id="step3">
+  <div class="content">
+    <div class="section-title" data-pl="Sprawdź swoją wiedzę" data-en="Test Your Knowledge">Sprawdź swoją wiedzę</div>
+    <p class="section-subtitle" data-pl="Odpowiedz na pytania, aby potwierdzić zrozumienie zasad" data-en="Answer the questions to confirm your understanding">Odpowiedz na pytania, aby potwierdzić zrozumienie zasad</p>
+    <div class="quiz-progress" id="quizProgress"></div>
+    <div id="quizContainer"></div>
+  </div>
+  <div class="btn-next-container dark-bg" id="quizNextContainer" style="display:none;">
+    <button class="btn-primary btn-yellow" id="quizNextBtn" onclick="nextQuestion()">→</button>
+  </div>
+</div>
+
+<!-- STEP 4: CONFIRMATION -->
+<div class="section section-confirm" id="step4">
+  <div class="content">
+    <div class="section-title" data-pl="Potwierdź i zakończ" data-en="Confirm & Finish">Potwierdź i zakończ</div>
+    <p class="section-subtitle" data-pl="Sprawdź swoje dane i zaakceptuj regulamin" data-en="Review your data and accept the rules">Sprawdź swoje dane i zaakceptuj regulamin</p>
+    <div class="confirm-summary">
+      <h3 data-pl="Twoje dane" data-en="Your Details">Twoje dane</h3>
+      <div class="confirm-row"><span class="label" data-pl="Imię i nazwisko" data-en="Full name">Imię i nazwisko</span><span class="value" id="confName">—</span></div>
+      <div class="confirm-row"><span class="label" data-pl="Firma" data-en="Company">Firma</span><span class="value" id="confCompany">—</span></div>
+      <div class="confirm-row"><span class="label" data-pl="Lokalizacja" data-en="Location">Lokalizacja</span><span class="value" id="confLocation">—</span></div>
+      <div class="confirm-row"><span class="label" data-pl="Rodzaj gościa" data-en="Visitor type">Rodzaj gościa</span><span class="value" id="confVisitorType">—</span></div>
+      <div class="confirm-row"><span class="label" data-pl="Powód wizyty" data-en="Reason">Powód wizyty</span><span class="value" id="confPurpose">—</span></div>
+      <div class="confirm-row"><span class="label" data-pl="Quiz" data-en="Quiz">Quiz</span><span class="value" id="confQuiz">—</span></div>
+      <div class="confirm-row"><span class="label" data-pl="Data i godzina" data-en="Date & time">Data i godzina</span><span class="value" id="confDate">—</span></div>
+    </div>
+    <div class="checkbox-group" id="chk1" onclick="toggleCheck(this)">
+      <div class="custom-checkbox"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7L5.5 10.5L12 3.5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="checkbox-label" data-pl="Zapoznałem/am się z zasadami BHP obowiązującymi na terenie firmy BOLT i zobowiązuję się do ich przestrzegania." data-en="I have read and understood the safety rules at BOLT and agree to comply with them.">Zapoznałem/am się z zasadami BHP obowiązującymi na terenie firmy BOLT i zobowiązuję się do ich przestrzegania.</div>
+    </div>
+    <div class="checkbox-group" id="chk2" onclick="toggleCheck(this)">
+      <div class="custom-checkbox"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7L5.5 10.5L12 3.5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="checkbox-label" data-pl="Przyjmuję do wiadomości, że BOLT nie odpowiada za szkody powstałe w wyniku nieprzestrzegania przeze mnie zasad bezpieczeństwa." data-en="I acknowledge that BOLT is not liable for damages resulting from my failure to comply with safety rules.">Przyjmuję do wiadomości, że BOLT nie odpowiada za szkody powstałe w wyniku nieprzestrzegania przeze mnie zasad bezpieczeństwa.</div>
+    </div>
+  </div>
+  <div class="btn-next-container">
+    <button class="btn-primary btn-yellow" id="btnConfirm" onclick="submitForm()" disabled data-pl="✓ Potwierdzam — Zakończ rejestrację" data-en="✓ Confirm — Complete Registration">✓ Potwierdzam — Zakończ rejestrację</button>
+  </div>
+</div>
+
+<!-- STEP 5: SUCCESS -->
+<div class="section section-success" id="step5">
+  <div class="success-check"><svg viewBox="0 0 48 48" fill="none"><path d="M10 25L20 35L38 13" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="success-title" data-pl="Gotowe!" data-en="All Done!">Gotowe!</div>
+  <p class="success-subtitle" data-pl="Dziękujemy za zapoznanie się z zasadami. Życzymy bezpiecznego pobytu na terenie firmy BOLT." data-en="Thank you for reviewing the safety rules. We wish you a safe visit at BOLT.">Dziękujemy za zapoznanie się z zasadami. Życzymy bezpiecznego pobytu na terenie firmy BOLT.</p>
+  <div class="success-id">
+    <div class="success-id-label" data-pl="Numer rejestracji" data-en="Registration ID">Numer rejestracji</div>
+    <div class="success-id-value" id="regId">—</div>
+  </div>
+  <div class="sheets-status" id="sheetsStatus"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIG: Wklej URL z Google Apps Script tutaj
+// ══════════════════════════════════════════════
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyx0X6jgpRpAL4QeczJxwplwn_Wjarxb6BNRq8kqhLbLsPOkwJNdfx9zruJZtcuyXut3A/exec';
+
+let currentStep = 0, currentLang = 'pl', quizIndex = 0, quizScore = 0, quizAnswered = false;
+let isSpeaking = false, narratorQueue = [], narratorIndex = 0;
+
+// ─── NARRATOR ───
+const narratorTexts = {
+  pl: [
+    'Zasady wejścia i poruszania się.',
+    'Poruszanie się po terenie firmy może odbywać się wyłącznie z przedstawicielem firmy BOLT.',
+    'Pracownicy firm zewnętrznych powinni uzgodnić ze swoim opiekunem zasady poruszania się.',
+    'Pojazdy parkuj wyłącznie w miejscach wyznaczonych.',
+    'Ograniczenia prędkości: wewnątrz hal do 5 kilometrów na godzinę, na zewnątrz do 10 kilometrów na godzinę.',
+    'Przebywaj tylko w miejscu wyznaczonego zadania.',
+    'Zakazy.',
+    'Całkowity zakaz alkoholu i narkotyków na terenie firmy.',
+    'Palenie dozwolone wyłącznie w wyznaczonych miejscach.',
+    'Zakaz wnoszenia wszelkiej broni, w tym replik.',
+    'Zakaz samowolnego uruchamiania maszyn.',
+    'Środki ochrony osobistej.',
+    'Kamizelka odblaskowa jest obowiązkowa na całym terenie firmy!',
+    'Wchodzimy wyłącznie w obuwiu na płaskiej, nieśliskiej podeszwie.',
+    'Dodatkowe środki ochrony: okulary, ochronniki słuchu, rękawice, kask, obuwie ochronne — stosuj w oznaczonych miejscach.',
+    'Zagrożenia: hałas, ruch maszyn i pojazdów, upadek przedmiotów, śliska nawierzchnia, porażenie prądem, pożar.',
+    'Sytuacje awaryjne.',
+    'Pożar: poinformuj przedstawiciela BOLT i słuchaj osoby prowadzącej ewakuację.',
+    'Uraz: zwróć się do pracowników BOLT. Apteczki są dostępne.',
+    'Numery alarmowe: 112, 998 straż pożarna, 999 pogotowie.',
+    'Porządek i odpady.',
+    'Utrzymuj ład i porządek. Segreguj odpady. Nie wyrzucaj samodzielnie odpadów niebezpiecznych.'
+  ],
+  en: [
+    'Entry and movement rules.',
+    'Movement within company premises is allowed only with a BOLT representative.',
+    'External employees must agree on movement rules with their supervisor.',
+    'Park vehicles only in designated areas.',
+    'Speed limits: 5 kilometers per hour inside halls, 10 outside.',
+    'Stay only at your designated task area.',
+    'Prohibitions.',
+    'Alcohol and drugs are strictly prohibited.',
+    'Smoking allowed only in designated areas.',
+    'All weapons prohibited, including replicas.',
+    'Do not operate machinery without authorization.',
+    'Personal protective equipment.',
+    'High-visibility vest is mandatory on all premises!',
+    'Only flat, non-slip footwear allowed.',
+    'Additional PPE in designated areas: goggles, hearing protection, gloves, hard hat, safety shoes.',
+    'Hazards: noise, moving machinery, falling objects, vehicle traffic, slippery surfaces, electric shock, fire.',
+    'Emergency procedures.',
+    'Fire: inform BOLT representative and follow evacuation instructions.',
+    'Injury: contact BOLT staff. First aid kits available.',
+    'Emergency numbers: 112, 998 fire, 999 ambulance.',
+    'Cleanliness and waste.',
+    'Keep workspace tidy. Sort waste. Do not dispose hazardous waste yourself.'
+  ]
+};
+
+function toggleNarrator() { isSpeaking ? stopNarrator() : startNarrator(); }
+
+function startNarrator() {
+  if (!('speechSynthesis' in window)) { alert(currentLang==='pl'?'Przeglądarka nie obsługuje czytania tekstu.':'Browser does not support text-to-speech.'); return; }
+  stopNarrator();
+  isSpeaking = true; narratorIndex = 0;
+  narratorQueue = narratorTexts[currentLang];
+  document.getElementById('narratorFab').classList.add('speaking');
+  document.getElementById('narratorIcon').textContent = '⏸';
+  speakNext();
+}
+
+function stopNarrator() {
+  isSpeaking = false; window.speechSynthesis.cancel();
+  document.getElementById('narratorFab').classList.remove('speaking');
+  document.getElementById('narratorIcon').textContent = '🔊';
+  document.getElementById('narratorTooltip').style.display = 'none';
+}
+
+function speakNext() {
+  if (!isSpeaking || narratorIndex >= narratorQueue.length) { stopNarrator(); return; }
+  const text = narratorQueue[narratorIndex];
+  const tip = document.getElementById('narratorTooltip');
+  tip.textContent = '🔊 ' + (text.length > 60 ? text.substring(0,57)+'...' : text);
+  tip.style.display = 'block';
+
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = currentLang === 'pl' ? 'pl-PL' : 'en-GB';
+  u.rate = 0.95; u.pitch = 1;
+  const voices = window.speechSynthesis.getVoices();
+  const pref = voices.find(v => v.lang.startsWith(currentLang) && v.name.includes('Google')) || voices.find(v => v.lang.startsWith(currentLang));
+  if (pref) u.voice = pref;
+  u.onend = () => { narratorIndex++; if (isSpeaking) setTimeout(speakNext, 300); };
+  u.onerror = () => { narratorIndex++; if (isSpeaking) setTimeout(speakNext, 300); };
+  window.speechSynthesis.speak(u);
+}
+
+if ('speechSynthesis' in window) { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices(); }
+
+// ─── QUIZ ───
+const quizData = [
+  { pl:'Jaki jest limit prędkości wewnątrz hal?', en:'What is the speed limit inside halls?',
+    options:[{pl:'15 km/h',en:'15 km/h'},{pl:'5 km/h',en:'5 km/h'},{pl:'10 km/h',en:'10 km/h'},{pl:'20 km/h',en:'20 km/h'}],
+    correct:1, feedbackPl:'Wewnątrz hal: 5 km/h, na zewnątrz: 10 km/h.', feedbackEn:'Inside halls: 5 km/h, outside: 10 km/h.' },
+  { pl:'Jaki środek ochrony jest OBOWIĄZKOWY na całym terenie?', en:'Which PPE is MANDATORY everywhere?',
+    options:[{pl:'Okulary ochronne',en:'Safety goggles'},{pl:'Kask',en:'Hard hat'},{pl:'Kamizelka odblaskowa',en:'Hi-vis vest'},{pl:'Rękawice',en:'Gloves'}],
+    correct:2, feedbackPl:'Kamizelka odblaskowa jest obowiązkowa!', feedbackEn:'Hi-vis vest is mandatory!' },
+  { pl:'Czy wolno samodzielnie uruchamiać maszyny?', en:'Can you operate machines independently?',
+    options:[{pl:'Tak, jeśli umiesz',en:'Yes, if you know how'},{pl:'Nie — tylko za zgodą i z uprawnieniami',en:'No — only with approval'},{pl:'Tak, w godzinach pracy',en:'Yes, during hours'}],
+    correct:1, feedbackPl:'Wymagana zgoda i uprawnienia.', feedbackEn:'Authorization and qualifications required.' },
+  { pl:'Gdzie można palić?', en:'Where is smoking allowed?',
+    options:[{pl:'Nigdzie',en:'Nowhere'},{pl:'Na zewnątrz budynków',en:'Outside buildings'},{pl:'Tylko w wyznaczonych miejscach',en:'Designated areas only'}],
+    correct:2, feedbackPl:'Wyłącznie w wyznaczonych miejscach.', feedbackEn:'Only in designated areas.' },
+  { pl:'Co robisz w przypadku pożaru?', en:'What do you do if there is a fire?',
+    options:[{pl:'Sam gaszę',en:'Extinguish it yourself'},{pl:'Informuję BOLT i słucham ewakuacji',en:'Inform BOLT, follow evacuation'},{pl:'Wychodzę bez informowania',en:'Leave without telling anyone'}],
+    correct:1, feedbackPl:'Poinformuj BOLT i słuchaj osoby prowadzącej ewakuację.', feedbackEn:'Inform BOLT and follow evacuation leader.' }
+];
+
+// ─── LANGUAGE ───
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent.trim().toLowerCase()===lang));
+  document.querySelectorAll('[data-pl]').forEach(el => { el.textContent = el.getAttribute('data-'+lang); });
+  document.querySelectorAll('[data-pl-ph]').forEach(el => { el.placeholder = el.getAttribute('data-'+lang+'-ph'); });
+  document.querySelectorAll('select option[data-pl]').forEach(el => { el.textContent = el.getAttribute('data-'+lang); });
+  if (currentStep===3) renderQuiz();
+  if (isSpeaking) { stopNarrator(); startNarrator(); }
+}
+
+// ─── NAV ───
+function goToStep(step) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('step'+step).classList.add('active');
+  currentStep = step; updateProgress();
+  window.scrollTo({top:0, behavior:'smooth'});
+  const fab = document.getElementById('narratorFab');
+  if (step===2) fab.classList.add('visible'); else { fab.classList.remove('visible'); stopNarrator(); }
+  if (step===3 && quizIndex===0) renderQuiz();
+  if (step===4) populateConfirmation();
+}
+
+function updateProgress() {
+  document.getElementById('progressFill').style.width = (currentStep/5*100)+'%';
+  document.querySelectorAll('.step-dot').forEach((d,i) => {
+    d.classList.remove('active','done');
+    if (i<currentStep) d.classList.add('done');
+    if (i===currentStep) d.classList.add('active');
+  });
+}
+
+// ─── VALIDATION ───
+function validateStep1() {
+  let ok = true;
+  [['fName','errName'],['fCompany','errCompany'],['fLocation','errLocation'],['fVisitorType','errVisitorType'],['fPurpose','errPurpose'],['fDuration','errDuration']].forEach(([id,eid]) => {
+    if (!document.getElementById(id).value.trim()) { document.getElementById(id).classList.add('error'); document.getElementById(eid).classList.add('show'); ok=false; }
+    else { document.getElementById(id).classList.remove('error'); document.getElementById(eid).classList.remove('show'); }
+  });
+  if (ok) goToStep(2);
+}
+
+function toggleCategory(el) { el.classList.toggle('open'); }
+
+// ─── QUIZ RENDER ───
+function renderQuiz() {
+  const lang=currentLang, q=quizData[quizIndex], c=document.getElementById('quizContainer');
+  let p=''; quizData.forEach((_,i) => { p+='<div class="quiz-progress-dot'+(i<quizIndex?' done':'')+(i===quizIndex?' current':'')+'"></div>'; });
+  document.getElementById('quizProgress').innerHTML=p;
+  const L=['A','B','C','D']; let o='';
+  q.options.forEach((opt,i) => { o+='<div class="quiz-option" onclick="selectAnswer('+i+')"><div class="quiz-option-letter">'+L[i]+'</div><div>'+opt[lang]+'</div></div>'; });
+  c.innerHTML='<div class="quiz-card"><div class="quiz-question-num">'+(lang==='pl'?'Pytanie':'Question')+' '+(quizIndex+1)+'/'+quizData.length+'</div><div class="quiz-question">'+q[lang]+'</div><div class="quiz-options">'+o+'</div><div class="quiz-feedback" id="quizFeedback"></div></div>';
+  quizAnswered=false; document.getElementById('quizNextContainer').style.display='none';
+}
+
+function selectAnswer(idx) {
+  if (quizAnswered) return; quizAnswered=true;
+  const q=quizData[quizIndex], opts=document.querySelectorAll('.quiz-option');
+  opts.forEach(o=>o.classList.add('disabled'));
+  if (idx===q.correct) { opts[idx].classList.add('correct'); quizScore++; showFB(true); }
+  else { opts[idx].classList.add('wrong'); opts[q.correct].classList.add('correct'); showFB(false);
+    const d=document.querySelectorAll('.quiz-progress-dot'); d[quizIndex].classList.add('wrong'); d[quizIndex].classList.remove('current'); }
+  document.getElementById('quizNextContainer').style.display='block';
+  document.getElementById('quizNextBtn').textContent = quizIndex>=quizData.length-1 ? (currentLang==='pl'?'Zakończ quiz →':'Finish quiz →') : (currentLang==='pl'?'Następne pytanie →':'Next question →');
+}
+
+function showFB(ok) {
+  const fb=document.getElementById('quizFeedback'), q=quizData[quizIndex];
+  fb.className='quiz-feedback '+(ok?'correct-fb':'wrong-fb');
+  fb.innerHTML=(ok?'✓ ':'✗ ')+(ok?(currentLang==='pl'?'Dobrze! ':'Correct! '):(currentLang==='pl'?'Niepoprawnie. ':'Incorrect. '))+(currentLang==='pl'?q.feedbackPl:q.feedbackEn);
+}
+
+function nextQuestion() { quizIndex++; quizIndex<quizData.length ? renderQuiz() : goToStep(4); }
+
+// ─── CONFIRM ───
+function populateConfirmation() {
+  document.getElementById('confName').textContent=document.getElementById('fName').value;
+  document.getElementById('confCompany').textContent=document.getElementById('fCompany').value;
+  const loc=document.getElementById('fLocation'); document.getElementById('confLocation').textContent=loc.value;
+  const vt=document.getElementById('fVisitorType'); document.getElementById('confVisitorType').textContent=vt.options[vt.selectedIndex].textContent;
+  const pp=document.getElementById('fPurpose'); document.getElementById('confPurpose').textContent=pp.options[pp.selectedIndex].textContent;
+  document.getElementById('confQuiz').textContent=quizScore+'/'+quizData.length;
+  document.getElementById('confDate').textContent=new Date().toLocaleDateString(currentLang==='pl'?'pl-PL':'en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('chk1').classList.remove('checked');
+  document.getElementById('chk2').classList.remove('checked');
+  updateConfirmBtn();
+}
+
+function toggleCheck(el) { el.classList.toggle('checked'); updateConfirmBtn(); }
+function updateConfirmBtn() {
+  document.getElementById('btnConfirm').disabled = !(document.getElementById('chk1').classList.contains('checked') && document.getElementById('chk2').classList.contains('checked'));
+}
+
+// ─── SUBMIT ───
+function submitForm() {
+  const now=new Date(), id='BOLT-'+Date.now().toString(36).toUpperCase().slice(-6);
+  document.getElementById('regId').textContent=id;
+  const st=document.getElementById('sheetsStatus');
+
+  const durationHours = parseFloat(document.getElementById('fDuration').value) || 0;
+  const timeOutDate = new Date(now.getTime() + durationHours * 60 * 60 * 1000);
+
+  const data = {
+    timestamp: now.toLocaleString('en-US'),
+    location: document.getElementById('fLocation').value,
+    visitorName: document.getElementById('fName').value,
+    companyName: document.getElementById('fCompany').value,
+    date: now.toLocaleDateString('en-US'),
+    visitorType: document.getElementById('fVisitorType').value,
+    reason: document.getElementById('fPurpose').value,
+    timeIn: now.toLocaleTimeString('en-US'),
+    timeOut: timeOutDate.toLocaleTimeString('en-US'),
+    quizScore: quizScore+'/'+quizData.length,
+    registrationId: id,
+    contactPerson: document.getElementById('fContact').value
+  };
+
+  goToStep(5);
+
+  if (GOOGLE_SCRIPT_URL) {
+    st.textContent = currentLang==='pl' ? '⏳ Zapisuję do rejestru...' : '⏳ Saving to register...';
+    st.className = 'sheets-status sending';
+    fetch(GOOGLE_SCRIPT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) })
+      .then(() => { st.textContent = currentLang==='pl' ? '✓ Zapisano w rejestrze' : '✓ Saved to register'; st.className='sheets-status sent'; })
+      .catch(() => { st.textContent = currentLang==='pl' ? '⚠ Błąd zapisu — poinformuj obsługę' : '⚠ Save error — inform staff'; st.className='sheets-status failed'; });
+  } else {
+    st.innerHTML = '<span style="color:rgba(255,255,255,0.3);">'+(currentLang==='pl'?'ℹ Rejestr Google Sheets nie jest jeszcze skonfigurowany':'ℹ Google Sheets not yet configured')+'</span>';
+  }
+}
+</script>
+
+<!--
+╔══════════════════════════════════════════════════════════════════╗
+║  📋 INSTRUKCJA: POŁĄCZENIE Z GOOGLE SHEETS (5 minut)           ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  1. Otwórz swój arkusz Google Sheets                             ║
+║  2. Menu: Rozszerzenia → Apps Script                             ║
+║  3. Usuń domyślny kod i wklej:                                   ║
+║                                                                  ║
+║  function doPost(e) {                                            ║
+║    var sheet = SpreadsheetApp.getActiveSpreadsheet()              ║
+║      .getActiveSheet();                                          ║
+║    var data = JSON.parse(e.postData.contents);                   ║
+║    sheet.appendRow([                                             ║
+║      data.timestamp,                                             ║
+║      data.location,                                              ║
+║      data.visitorName,                                           ║
+║      data.companyName,                                           ║
+║      data.date,                                                  ║
+║      data.visitorType,                                           ║
+║      data.reason,                                                ║
+║      data.timeIn,                                                ║
+║      data.timeOut,                                               ║
+║      data.quizScore,                                             ║
+║      data.registrationId,                                        ║
+║      data.contactPerson                                          ║
+║    ]);                                                           ║
+║    return ContentService                                         ║
+║      .createTextOutput(JSON.stringify({status:'ok'}))            ║
+║      .setMimeType(ContentService.MimeType.JSON);                 ║
+║  }                                                               ║
+║                                                                  ║
+║  4. Kliknij: Wdróż → Nowe wdrożenie                             ║
+║     Typ: Aplikacja internetowa                                   ║
+║     Wykonuj jako: Ja                                             ║
+║     Kto ma dostęp: Wszyscy                                       ║
+║  5. Skopiuj wygenerowany URL                                     ║
+║  6. Wklej go do GOOGLE_SCRIPT_URL na początku <script>           ║
+║                                                                  ║
+║  Gotowe! Wpisy trafią do istniejącego arkusza.                   ║
+║  Kolumny J-L to nowe dane: quiz, ID rejestracji, kontakt.       ║
+╚══════════════════════════════════════════════════════════════════╝
+-->
+</body>
+</html>
